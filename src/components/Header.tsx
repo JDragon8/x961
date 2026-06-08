@@ -16,12 +16,15 @@ export default function Header() {
 
           {/* Desktop nav */}
           <nav className="hidden md:flex space-x-8" aria-label="Main navigation">
-            <a href="#files" className="hover:text-blue-400 transition-colors">
+            <Link href="/#files" className="hover:text-blue-400 transition-colors">
               Files
-            </a>
-            <a href="#contact" className="hover:text-blue-400 transition-colors">
+            </Link>
+            <Link href="/#contact" className="hover:text-blue-400 transition-colors">
               Contact Us
-            </a>
+            </Link>
+            <Link href="/form" className="hover:text-blue-400 transition-colors">
+              Forms
+            </Link>
           </nav>
 
           {/* Mobile menu toggle */}
@@ -44,12 +47,15 @@ export default function Header() {
         {/* Mobile nav */}
         {menuOpen && (
           <nav className="md:hidden pb-4 space-y-2" aria-label="Mobile navigation">
-            <a href="#files" className="block px-3 py-2 rounded-md hover:bg-gray-700 transition-colors" onClick={() => setMenuOpen(false)}>
+            <Link href="/#files" className="block px-3 py-2 rounded-md hover:bg-gray-700 transition-colors" onClick={() => setMenuOpen(false)}>
               Files
-            </a>
-            <a href="#contact" className="block px-3 py-2 rounded-md hover:bg-gray-700 transition-colors" onClick={() => setMenuOpen(false)}>
+            </Link>
+            <Link href="/#contact" className="block px-3 py-2 rounded-md hover:bg-gray-700 transition-colors" onClick={() => setMenuOpen(false)}>
               Contact Us
-            </a>
+            </Link>
+            <Link href="/form" className="block px-3 py-2 rounded-md hover:bg-gray-700 transition-colors" onClick={() => setMenuOpen(false)}>
+              Forms
+            </Link>
           </nav>
         )}
       </div>
