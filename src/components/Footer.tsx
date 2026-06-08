@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Footer() {
   const currentYear = new Date().getFullYear();
 
@@ -21,6 +23,11 @@ export default function Footer() {
                 <a href="#contact" className="hover:text-white transition-colors">
                   Contact Us
                 </a>
+              </li>
+              <li>
+                <Link href="/form" className="hover:text-white transition-colors">
+                  Forms
+                </Link>
               </li>
             </ul>
           </div>
