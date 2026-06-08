@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   type FormField,
+  type FormImage,
   generateId,
   saveArchivedForm,
   validateFormFields,
@@ -14,6 +15,8 @@ interface FormBuilderProps {
 
 export default function FormBuilder({ onSaved }: FormBuilderProps) {
   const [title, setTitle] = useState("");
+  const [customHeader, setCustomHeader] = useState("");
+  const [customFooter, setCustomFooter] = useState("");
   const [fields, setFields] = useState<FormField[]>([
     { label: "Full Name", value: "" },
     { label: "Email", value: "" },
@@ -21,9 +24,11 @@ export default function FormBuilder({ onSaved }: FormBuilderProps) {
     { label: "Subject", value: "" },
     { label: "Details", value: "" },
   ]);
+  const [images, setImages] = useState<FormImage[]>([]);
   const [errors, setErrors] = useState<Record<number, string>>({});
   const [titleError, setTitleError] = useState("");
   const [status, setStatus] = useState<"idle" | "saved" | "error">("idle");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const updateField = (
     idx: number,
@@ -62,6 +67,32 @@ export default function FormBuilder({ onSaved }: FormBuilderProps) {
     });
   };
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    Array.from(files).forEach((file) => {
+      if (!file.type.startsWith("image/")) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const data = reader.result as string;
+        setImages((prev) => [
+          ...prev,
+          { id: generateId(), name: file.name, data },
+        ]);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const removeImage = (id: string) => {
+    setImages((prev) => prev.filter((img) => img.id !== id));
+  };
+
   const handlePrint = () => {
     window.print();
   };
@@ -89,10 +120,13 @@ export default function FormBuilder({ onSaved }: FormBuilderProps) {
       saveArchivedForm({
         id: generateId(),
         title: title.trim(),
+        customHeader: customHeader.trim(),
+        customFooter: customFooter.trim(),
         fields: fields.map((f) => ({
           label: f.label.trim(),
           value: f.value.trim(),
         })),
+        images: images.map((img) => ({ ...img })),
         submittedAt: new Date().toISOString(),
       });
       setStatus("saved");
@@ -104,6 +138,8 @@ export default function FormBuilder({ onSaved }: FormBuilderProps) {
 
   const handleReset = () => {
     setTitle("");
+    setCustomHeader("");
+    setCustomFooter("");
     setFields([
       { label: "Full Name", value: "" },
       { label: "Email", value: "" },
@@ -111,6 +147,7 @@ export default function FormBuilder({ onSaved }: FormBuilderProps) {
       { label: "Subject", value: "" },
       { label: "Details", value: "" },
     ]);
+    setImages([]);
     setErrors({});
     setTitleError("");
     setStatus("idle");
@@ -166,6 +203,24 @@ export default function FormBuilder({ onSaved }: FormBuilderProps) {
               {titleError}
             </p>
           )}
+        </div>
+
+        {/* Custom Header */}
+        <div>
+          <label
+            htmlFor="custom-header"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Custom Header
+          </label>
+          <textarea
+            id="custom-header"
+            value={customHeader}
+            onChange={(e) => setCustomHeader(e.target.value)}
+            placeholder="Enter a custom header for your form (e.g. company name, department, reference number)"
+            rows={2}
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 resize-y"
+          />
         </div>
 
         {/* Dynamic fields */}
@@ -243,6 +298,76 @@ export default function FormBuilder({ onSaved }: FormBuilderProps) {
               </button>
             </div>
           ))}
+        </div>
+
+        {/* Image Upload */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium text-gray-700">Images</h3>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="text-sm text-blue-600 hover:text-blue-800 font-medium print:hidden"
+            >
+              + Add Image
+            </button>
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleImageUpload}
+            className="hidden"
+            aria-label="Upload images"
+          />
+
+          {images.length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {images.map((img) => (
+                <div
+                  key={img.id}
+                  className="relative group border border-gray-200 rounded-md overflow-hidden"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={img.data}
+                    alt={img.name}
+                    className="w-full h-24 object-cover"
+                  />
+                  <div className="absolute bottom-0 left-0 right-0 bg-black/50 px-2 py-1">
+                    <p className="text-xs text-white truncate">{img.name}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeImage(img.id)}
+                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity print:hidden"
+                    aria-label={`Remove image ${img.name}`}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Custom Footer */}
+        <div>
+          <label
+            htmlFor="custom-footer"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Custom Footer
+          </label>
+          <textarea
+            id="custom-footer"
+            value={customFooter}
+            onChange={(e) => setCustomFooter(e.target.value)}
+            placeholder="Enter a custom footer (e.g. disclaimer, signature line, contact info)"
+            rows={2}
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 resize-y"
+          />
         </div>
 
         {/* Actions */}
