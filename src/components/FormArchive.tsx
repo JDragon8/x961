@@ -22,12 +22,30 @@ export default function FormArchive() {
   };
 
   const handleDownload = (form: ArchivedForm) => {
-    const lines = [
+    const lines: string[] = [];
+
+    if (form.customHeader) {
+      lines.push(form.customHeader, "");
+    }
+
+    lines.push(
       form.title,
       `Submitted: ${new Date(form.submittedAt).toLocaleString()}`,
       "---",
-      ...form.fields.map((f) => `${f.label}: ${f.value}`),
-    ];
+      ...form.fields.map((f) => `${f.label}: ${f.value}`)
+    );
+
+    if (form.images && form.images.length > 0) {
+      lines.push("", "--- Images ---");
+      form.images.forEach((img) => {
+        lines.push(`[Image: ${img.name}]`);
+      });
+    }
+
+    if (form.customFooter) {
+      lines.push("", "---", form.customFooter);
+    }
+
     const blob = new Blob([lines.join("\n")], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -42,6 +60,25 @@ export default function FormArchive() {
   const handlePrintSingle = (form: ArchivedForm) => {
     const printWindow = window.open("", "_blank");
     if (!printWindow) return;
+
+    const imagesHtml =
+      form.images && form.images.length > 0
+        ? `<div class="images">
+            <h3>Images</h3>
+            <div style="display:flex;flex-wrap:wrap;gap:12px;">
+              ${form.images
+                .map(
+                  (img) =>
+                    `<div style="text-align:center;">
+                      <img src="${img.data}" alt="${img.name}" style="max-width:200px;max-height:200px;border:1px solid #ddd;border-radius:4px;" />
+                      <p style="font-size:12px;color:#666;margin-top:4px;">${img.name}</p>
+                    </div>`
+                )
+                .join("")}
+            </div>
+          </div>`
+        : "";
+
     const html = `
       <!DOCTYPE html>
       <html>
@@ -49,13 +86,18 @@ export default function FormArchive() {
         <title>${form.title}</title>
         <style>
           body { font-family: Arial, sans-serif; padding: 40px; }
+          .custom-header { font-size: 18px; color: #333; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px solid #333; white-space: pre-wrap; }
           h1 { font-size: 24px; margin-bottom: 8px; }
           .date { color: #666; margin-bottom: 24px; }
           .field { margin-bottom: 12px; }
           .label { font-weight: bold; }
+          .images { margin-top: 24px; }
+          .images h3 { font-size: 16px; margin-bottom: 12px; }
+          .custom-footer { margin-top: 32px; padding-top: 12px; border-top: 1px solid #ccc; color: #666; font-size: 14px; white-space: pre-wrap; }
         </style>
       </head>
       <body>
+        ${form.customHeader ? `<div class="custom-header">${form.customHeader}</div>` : ""}
         <h1>${form.title}</h1>
         <p class="date">Submitted: ${new Date(form.submittedAt).toLocaleString()}</p>
         ${form.fields
@@ -64,6 +106,8 @@ export default function FormArchive() {
               `<div class="field"><span class="label">${f.label}:</span> ${f.value}</div>`
           )
           .join("")}
+        ${imagesHtml}
+        ${form.customFooter ? `<div class="custom-footer">${form.customFooter}</div>` : ""}
         <script>window.print(); window.close();</script>
       </body>
       </html>
@@ -146,7 +190,13 @@ export default function FormArchive() {
               </div>
 
               {expandedId === form.id && (
-                <div className="mt-3 pl-4 border-l-2 border-blue-200 space-y-1">
+                <div className="mt-3 pl-4 border-l-2 border-blue-200 space-y-2">
+                  {form.customHeader && (
+                    <div className="text-sm font-semibold text-gray-800 pb-2 border-b border-gray-200 whitespace-pre-wrap">
+                      {form.customHeader}
+                    </div>
+                  )}
+
                   {form.fields.map((field, idx) => (
                     <div key={idx} className="text-sm">
                       <span className="font-medium text-gray-700">
@@ -155,6 +205,38 @@ export default function FormArchive() {
                       <span className="text-gray-600">{field.value}</span>
                     </div>
                   ))}
+
+                  {form.images && form.images.length > 0 && (
+                    <div className="pt-2">
+                      <p className="text-sm font-medium text-gray-700 mb-2">
+                        Images:
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {form.images.map((img) => (
+                          <div
+                            key={img.id}
+                            className="relative border border-gray-200 rounded overflow-hidden"
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={img.data}
+                              alt={img.name}
+                              className="w-16 h-16 object-cover"
+                            />
+                            <p className="text-[10px] text-gray-500 text-center truncate px-1">
+                              {img.name}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {form.customFooter && (
+                    <div className="text-sm text-gray-500 pt-2 border-t border-gray-200 whitespace-pre-wrap">
+                      {form.customFooter}
+                    </div>
+                  )}
                 </div>
               )}
             </li>

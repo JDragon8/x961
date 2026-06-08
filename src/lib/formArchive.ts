@@ -3,10 +3,19 @@
  * Uses localStorage for persistence.
  */
 
+export interface FormImage {
+  id: string;
+  name: string;
+  data: string; // base64 data URL
+}
+
 export interface ArchivedForm {
   id: string;
   title: string;
   fields: FormField[];
+  images: FormImage[];
+  customHeader: string;
+  customFooter: string;
   submittedAt: string;
 }
 
